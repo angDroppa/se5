@@ -42,12 +42,12 @@ export async function POST(req: NextRequest) {
   await setAuthCookies(accessToken, refreshToken);
 
   return NextResponse.json<UserResponse>({
-    user: {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      roleName: user.roleName,
-    },
+
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    roleName: user.roleName,
+
   });
 }

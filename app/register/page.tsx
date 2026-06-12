@@ -4,12 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { authApi } from "@/lib/axios/auth";
+import { register as registerApi } from "@/lib/axios/auth";
 import { RegisterSchema, type RegisterInput } from "@/lib/validators/auth";
 import { z } from "zod";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 const RegisterFormSchema = RegisterSchema.extend({
-  confirmPassword: z.string().min(6),
+  confirmPassword: z.string().min(8, "Deve contenere almeno 8 caratteri"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Le password non coincidono",
   path: ["confirmPassword"],
@@ -19,6 +21,8 @@ type RegisterForm = z.infer<typeof RegisterFormSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const {
     register,
@@ -32,7 +36,7 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     const { confirmPassword, ...payload } = data;
     try {
-      await authApi.register(payload);
+      await registerApi(payload);
       toast.success("Registrazione completata!");
       router.push("/login?registered=true");
     } catch {}
@@ -91,12 +95,21 @@ export default function RegisterPage() {
             </fieldset>
             <fieldset className="fieldset">
               <legend className="fieldset-legend">Password</legend>
-              <input
-                type="password"
-                placeholder="min. 6 caratteri"
-                className={`input w-full ${errors.password ? "input-error" : ""}`}
-                {...register("password")}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="min. 8 caratteri"
+                  className={`input w-full pr-10 ${errors.password ? "input-error" : ""}`}
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {errors.password && (
                 <p className="fieldset-label text-error">
                   {errors.password.message}
@@ -105,12 +118,21 @@ export default function RegisterPage() {
             </fieldset>
             <fieldset className="fieldset">
               <legend className="fieldset-legend">Conferma password</legend>
-              <input
-                type="password"
-                placeholder="ripeti la password"
-                className={`input w-full ${errors.confirmPassword ? "input-error" : ""}`}
-                {...register("confirmPassword")}
-              />
+              <div className="relative">
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="ripeti la password"
+                  className={`input w-full pr-10 ${errors.confirmPassword ? "input-error" : ""}`}
+                  {...register("confirmPassword")}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                >
+                  {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <p className="fieldset-label text-error">
                   {errors.confirmPassword.message}

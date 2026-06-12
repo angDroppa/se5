@@ -27,21 +27,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession();
 
-  let user = null;
-  if (session) {
-    user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        roleName: true,
-      },
-    });
-  }
 
   return (
     <html
@@ -51,7 +37,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <GlobalLoader />
         <Toaster position="top-right" />
-        <Navbar user={user} />
+        <Navbar/>
         {children}
       </body>
     </html>

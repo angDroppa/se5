@@ -15,7 +15,7 @@ type TableProps<T> = {
 
 export default function Table<T>({ data, columns, keyExtractor, onRowClick }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto w-full">
+    <div className="overflow-x-auto w-full h-[80vh]">
       <table className="table">
         <thead>
           <tr>

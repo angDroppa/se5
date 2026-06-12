@@ -28,61 +28,31 @@ export const CategoryReqSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const RefoundReqCreateSchema = z.object({
+    expenseDate: z.coerce
+        .date({ error: "La data della spesa è obbligatoria" }),
+
     category: z
         .string({ error: "La categoria è obbligatoria" })
         .min(1, { message: "La categoria non può essere vuota" })
-        .trim()
-        .openapi({ example: "cena" }),
+        .trim(),
 
     import: z
         .number({ error: "L'importo deve essere un numero positivo" })
-        .positive({ message: "L'importo deve essere maggiore di zero" })
-        .openapi({ example: 42.50 }),
+        .positive({ message: "L'importo deve essere maggiore di zero" }),
 
     description: z
-        .string({ error: "La descrizione deve essere una stringa" })
-        .nullable()
-        .openapi({ example: "Cena con cliente" }),
+        .string({ error: "La descrizione è obbligatoria" })
+        .min(1, { message: "La descrizione non può essere vuota" })
+        .trim(),
 
     refDocument: z
         .string({ error: "Il documento di riferimento deve essere una stringa" })
+        // .trim()
+        // .min(1, { message: "Il documento non può essere composto solo da spazi" })
         .nullable()
-        .openapi({ example: "scontrino_123.jpg" }),
-
-    state: z
-        .string({ error: "Lo stato è obbligatorio" })
-        .min(1, { message: "Lo stato non può essere vuoto" })
-        .openapi({ example: "ATTESA" }),
-
-    userId: z
-        .number({ error: "L'ID utente deve essere un numero intero valido" })
-        .int({ message: "L'ID utente deve essere un numero intero" })
-        .positive({ message: "L'ID utente non è valido" })
-        .openapi({ example: 1 }),
-
-    evaluatorId: z
-        .number({ error: "L'ID valutatore deve essere un numero intero" })
-        .int({ message: "L'ID valutatore deve essere un numero intero" })
-        .positive({ message: "L'ID valutatore non è valido" })
-        .nullable()
-        .openapi({ example: 3 }),
-
-    evaluationDate: z
-        .coerce.date({ error: "La data di valutazione non è valida" })
-        .nullable()
-        .openapi({ example: "2026-05-01" }),
-
-    denyDescription: z
-        .string({ error: "La motivazione del rifiuto deve essere una stringa" })
-        .min(1, { message: "La motivazione del rifiuto non può essere vuota" })
-        .nullable()
-        .openapi({ example: "Troppe spese" }),
-
-    payDate: z
-        .coerce.date({ error: "La data di pagamento non è valida" })
-        .nullable()
-        .openapi({ example: "2026-05-01" }),
+        .optional(),
 });
+
 
 // ---------------------------------------------------------------------------
 // Schema per la RISPOSTA (include id, createdAt e oggetti User annidati)
@@ -145,7 +115,7 @@ export const RefoundReqResponseSchema = z.object({
 export const RefoundReqFiltersSchema = z.object({
     state: z.string().optional(),
     category: z.string().optional(),
-    userId: z.coerce.number().int().optional(),
+    search: z.string().optional(),
     dateFrom: z.preprocess(
         (val) => (val === "" || val === null ? undefined : val),
         z.coerce.date().optional()
@@ -162,13 +132,9 @@ export const RefoundReqFiltersSchema = z.object({
     { message: "La data di fine non può essere precedente alla data di inizio", path: ["dateTo"] }
 );
 
-
-
-// validators/refoundreq.ts
 export const RefoundReqUpdateStateSchema = z.object({
     state: z.string({ error: "Lo stato è obbligatorio" })
         .min(1, { message: "Lo stato non può essere vuoto" }),
-    evaluationDate: z.coerce.date({ error: "La data di valutazione non è valida" }),
     denyDescription: z.string({ error: "La motivazione del rifiuto deve essere una stringa" })
         .min(1)
         .nullable()
@@ -176,9 +142,18 @@ export const RefoundReqUpdateStateSchema = z.object({
     payDate: z.coerce.date({ error: "La data di pagamento non è valida" })
         .nullable()
         .optional(),
+}).superRefine((data, ctx) => {
+    if (data.state !== "PAGATO" && data.payDate) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "La data di pagamento può essere impostata solo per stato PAGATO",
+            path: ["payDate"],
+        });
+    }
 });
 
 export type RefoundReqUpdateState = z.infer<typeof RefoundReqUpdateStateSchema>;
+
 export type RefoundReqFilters = z.infer<typeof RefoundReqFiltersSchema>;
 export type RefoundReqFiltersForm = z.input<typeof RefoundReqFiltersSchema>;
 

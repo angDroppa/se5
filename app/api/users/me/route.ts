@@ -28,6 +28,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Utente non trovato" }, { status: 404 });
   }
 
-  return NextResponse.json<UserResponse>({ user });
+  return NextResponse.json<UserResponse>(user);
 
 }

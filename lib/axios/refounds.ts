@@ -3,7 +3,7 @@ import api from "./index";
 import { z } from "zod";
 
 export async function getStates(): Promise<StateReq[]> {
-  const res = await api.get<{ states: StateReq[] }>("/states");
+  const res = await api.get<{ states: StateReq[] }>("/statereq");
   return z.array(StateReqSchema).parse(res.data.states);
 }
 

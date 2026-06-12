@@ -70,14 +70,16 @@ model RefoundReq {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
 
+  expenseDate DateTime
+
   category    String
   categoryReq CategoryReq @relation(fields: [category], references: [id], onDelete: Cascade)
 
   import      Decimal @db.Decimal(10, 2)
-  description String?
+  description String
   refDocument String?
 
-  state    String
+  state    String   @default("ATTESA")
   stateReq StateReq @relation(fields: [state], references: [id], onDelete: Cascade)
 
   userId Int

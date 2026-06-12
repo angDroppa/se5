@@ -10,13 +10,33 @@ export async function GET(req: NextRequest): Promise<NextResponse<{ refounds: Re
     const { searchParams } = new URL(req.url);
     const filters = RefoundReqFiltersSchema.parse(Object.fromEntries(searchParams));
 
-    const userId = session.role === "USER" ? session.userId : filters.userId;
+    const userId = session.role === "USER" ? session.userId : undefined;
 
     const refounds = await prisma.refoundReq.findMany({
         where: {
+            ...(userId && { userId }),
             ...(filters.state && { state: filters.state }),
             ...(filters.category && { category: filters.category }),
-            ...(userId && { userId }),
+            ...(filters.search && {
+                user: {
+                    OR: [
+                        { firstName: { contains: filters.search, mode: "insensitive" } },
+                        { lastName: { contains: filters.search, mode: "insensitive" } },
+                        {
+                            AND: [
+                                { firstName: { contains: filters.search.split(" ")[0], mode: "insensitive" } },
+                                { lastName: { contains: filters.search.split(" ")[1] ?? "", mode: "insensitive" } },
+                            ]
+                        },
+                        {
+                            AND: [
+                                { firstName: { contains: filters.search.split(" ")[1] ?? "", mode: "insensitive" } },
+                                { lastName: { contains: filters.search.split(" ")[0], mode: "insensitive" } },
+                            ]
+                        }
+                    ],
+                },
+            }),
             ...((filters.dateFrom || filters.dateTo) && {
                 createdAt: {
                     ...(filters.dateFrom && { gte: filters.dateFrom }),
@@ -53,5 +73,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<RefoundReqRes
         include: { user: true, evaluator: true },
     });
 
-    return NextResponse.json(RefoundReqResponseSchema.parse(created));
+    return NextResponse.json(
+        RefoundReqResponseSchema.parse({
+            ...created,
+            import: created.import.toNumber(),
+        })
+    );
 }

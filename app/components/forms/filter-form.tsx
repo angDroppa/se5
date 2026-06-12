@@ -1,12 +1,17 @@
 // app/components/forms/refound-filters-form.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  CategoryReq,
   RefoundReqFilters,
   RefoundReqFiltersSchema,
+  StateReq,
 } from "@/lib/validators/refoundreq";
+import { useSessionStore } from "@/lib/store/session-store";
+import { getCategories, getStates } from "@/lib/axios/refounds";
 
 type Props = {
   onSubmit: (filters: RefoundReqFilters) => void;
@@ -25,22 +30,53 @@ export default function RefoundFiltersForm({ onSubmit, onReset }: Props) {
     ) as Resolver<RefoundReqFilters>,
   });
 
+  const role = useSessionStore((s) => s.user?.role);
+
+  const [states, setStates] = useState<StateReq[]>([]);
+  const [categories, setCategories] = useState<CategoryReq[]>([]);
+
+  useEffect(() => {
+    getStates().then(setStates).catch(console.error);
+    getCategories().then(setCategories).catch(console.error);
+  }, []);
+
   return (
-    <div className="flex flex-col gap-3 items-start h-10 p-5 w-[15vw] border h-[80vh]">
-        <h1>Filtri</h1>
+    <div className="flex flex-col gap-3 items-start p-5 w-[15vw] border h-[80vh]">
+      <h1>Filtri</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
-        <input
+
+        <select
           {...register("category")}
-          type="text"
-          placeholder="Categoria"
-          className="input input-bordered input-sm"
-        />
-        <input
+          className="select select-bordered select-sm"
+        >
+          <option value="">Tutte le categorie</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.id}
+            </option>
+          ))}
+        </select>
+
+        <select
           {...register("state")}
-          type="text"
-          placeholder="Stato"
-          className="input input-bordered input-sm"
-        />
+          className="select select-bordered select-sm"
+        >
+          <option value="">Tutti gli stati</option>
+          {states.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.id}
+            </option>
+          ))}
+        </select>
+
+        {role !== "USER" && (
+          <input
+            {...register("search")}
+            type="text"
+            placeholder="Cerca per nome e cognome"
+            className="input input-bordered input-sm"
+          />
+        )}
 
         <div className="flex flex-col gap-1">
           <input
@@ -59,12 +95,10 @@ export default function RefoundFiltersForm({ onSubmit, onReset }: Props) {
           <input
             {...register("dateTo")}
             type="date"
-            className={`input input-bordered input-sm ${errors.dateFrom ? "input-error" : ""}`}
+            className={`input input-bordered input-sm ${errors.dateTo ? "input-error" : ""}`}
           />
           {errors.dateTo && (
-            <span className="text-error text-xs">
-              {errors.dateTo.message}
-            </span>
+            <span className="text-error text-xs">{errors.dateTo.message}</span>
           )}
         </div>
 

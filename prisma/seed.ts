@@ -10,6 +10,12 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 export async function main() {
+
+  await prisma.refoundReq.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.categoryReq.deleteMany();
+  await prisma.stateReq.deleteMany();
+  await prisma.role.deleteMany();
   const hashedPassword = await bcrypt.hash("Password123!", 10);
 
   // ROLES
@@ -70,6 +76,7 @@ export async function main() {
   });
 
   // REFOUND REQUESTS
+  // REFOUND REQUESTS
   await prisma.refoundReq.createMany({
     data: [
       {
@@ -78,36 +85,89 @@ export async function main() {
         import: 45.50,
         description: "Cena con cliente",
         state: "ATTESA",
+        createdAt: new Date("2026-01-15"),
+        expenseDate: new Date("2026-01-10"),
       },
       {
         userId: user1.id,
         category: "trasporto",
         import: 12.00,
         description: "Taxi aeroporto",
-        state: "ACCETTATO",
-        evaluatorId: admin.id,
-        evaluationDate: new Date("2026-05-10"),
-        payDate: new Date("2026-05-15"),
+        state: "ATTESA",
+        createdAt: new Date("2026-01-22"),
+        expenseDate: new Date("2026-01-10"),
       },
       {
         userId: user2.id,
         category: "alloggio",
         import: 120.00,
         description: "Hotel trasferta Milano",
-        state: "RIFIUTATO",
-        evaluatorId: admin.id,
-        evaluationDate: new Date("2026-05-12"),
-        denyDescription: "Manca documento giustificativo",
+        state: "ATTESA",
+        createdAt: new Date("2026-02-03"),
+        expenseDate: new Date("2026-01-10"),
       },
       {
         userId: user2.id,
         category: "formazione",
         import: 200.00,
         description: "Corso React avanzato",
-        state: "PAGATO",
-        evaluatorId: admin.id,
-        evaluationDate: new Date("2026-04-20"),
-        payDate: new Date("2026-04-30"),
+        state: "ATTESA",
+        createdAt: new Date("2026-02-18"),
+        expenseDate: new Date("2026-01-10"),
+      },
+      {
+        userId: user1.id,
+        category: "altro",
+        import: 33.00,
+        description: "Materiale ufficio",
+        state: "ATTESA",
+        createdAt: new Date("2026-03-05"),
+        expenseDate: new Date("2026-01-10"),
+      },
+      {
+        userId: user2.id,
+        category: "trasporto",
+        import: 55.00,
+        description: "Treno Roma-Milano",
+        state: "ATTESA",
+        createdAt: new Date("2026-03-14"),
+        expenseDate: new Date("2026-01-10"),
+      },
+      {
+        userId: user1.id,
+        category: "cena",
+        import: 78.50,
+        description: "Pranzo di lavoro con partner",
+        state: "ATTESA",
+        createdAt: new Date("2026-03-28"),
+        expenseDate: new Date("2026-01-10"),
+      },
+      {
+        userId: user2.id,
+        category: "alloggio",
+        import: 95.00,
+        description: "Hotel trasferta Torino",
+        state: "ATTESA",
+        createdAt: new Date("2026-04-10"),
+        expenseDate: new Date("2026-01-10"),
+      },
+      {
+        userId: user1.id,
+        category: "formazione",
+        import: 350.00,
+        description: "Conferenza Node.js",
+        state: "ATTESA",
+        createdAt: new Date("2026-04-22"),
+        expenseDate: new Date("2026-01-10"),
+      },
+      {
+        userId: user2.id,
+        category: "altro",
+        import: 18.00,
+        description: "Spese postali documenti",
+        state: "ATTESA",
+        createdAt: new Date("2026-05-07"),
+        expenseDate: new Date("2026-01-10"),
       },
     ],
   });

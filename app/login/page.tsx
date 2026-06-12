@@ -3,12 +3,14 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
-import { authApi } from "@/lib/axios/auth";
 import { LoginSchema, type LoginInput } from "@/lib/validators/auth";
-
+import { login } from "@/lib/axios/auth";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -21,7 +23,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginInput) => {
     try {
-      await authApi.login(data);
+      await login(data);
       router.push("/dashboard");
       router.refresh();
     } catch {
@@ -55,12 +57,21 @@ export default function LoginPage() {
             </fieldset>
             <fieldset className="fieldset">
               <legend className="fieldset-legend">Password</legend>
-              <input
-                type="password"
-                placeholder="la tua password"
-                className={`input w-full ${errors.password ? "input-error" : ""}`}
-                {...register("password")}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="min. 8 caratteri"
+                  className={`input w-full pr-10 ${errors.password ? "input-error" : ""}`}
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {errors.password && (
                 <p className="fieldset-label text-error">
                   {errors.password.message}
