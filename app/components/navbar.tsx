@@ -3,6 +3,7 @@
 import Link from "next/link";
 import NavUser from "./navuser";
 import { useSessionStore } from "@/lib/store/session-store";
+import NavLnks from "./nav-links";
 
 export default function Navbar() {
   const user = useSessionStore((s) => s.user);
@@ -14,7 +15,10 @@ export default function Navbar() {
       <div className="fixed top-0 left-0 w-full z-50 bg-base-200">
         <div className="h-16 flex items-center justify-between px-4">
           <div className="flex-1">
-            <Link href="/" className="text-xl font-bold">MyApp</Link>
+            <Link href="/" className="text-xl font-bold">
+              Rimborso Spese
+            </Link>
+            <NavLnks />
           </div>
           <div className="ml-auto">
             <NavUser />

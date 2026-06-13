@@ -8,10 +8,14 @@ import {
   RefoundReqFilters,
   RefoundReqResponse,
   RefoundReqUpdateState,
+  StateReq,
 } from "@/lib/validators/refoundreq";
 import {
   createRefound,
+  deleteRefound,
   getRefounds,
+  getStates,
+  updateRefound,
   updateRefoundState,
 } from "@/lib/axios/refounds";
 import Table from "@/app/components/table";
@@ -22,6 +26,8 @@ import { STATE_CONFIG, StateId } from "@/lib/config/states";
 import { useSessionStore } from "@/lib/store/session-store";
 import RefoundUpdateStateForm from "@/app/components/forms/deny-form";
 import RefoundCreateForm from "@/app/components/forms/refound-form";
+import { getCategories } from "@/lib/axios/refounds";
+import { CategoryReq } from "@/lib/validators/refoundreq";
 
 function StatoBadge({ stato }: { stato: string }) {
   const config = STATE_CONFIG[stato as StateId];
@@ -38,6 +44,16 @@ export default function DashboardPage() {
   const denyModalRef = useRef<ModalHandle>(null);
   const createModalRef = useRef<ModalHandle>(null);
   const role = useSessionStore((s) => s.user?.role);
+  const [editingRefound, setEditingRefound] =
+    useState<RefoundReqResponse | null>(null);
+  const [categories, setCategories] = useState<CategoryReq[]>([]);
+
+  const [states, setStates] = useState<StateReq[]>([]);
+
+  useEffect(() => {
+    getCategories().then(setCategories).catch(console.error);
+    getStates().then(setStates).catch(console.error);
+  }, []);
 
   useEffect(() => {
     getRefounds(filters).then(setRefounds);
@@ -72,6 +88,39 @@ export default function DashboardPage() {
     const created = await createRefound(data);
     setRefounds((prev) => [created, ...prev]);
     createModalRef.current?.close();
+  }
+
+  async function onEditSubmit(data: RefoundReqCreate) {
+    if (!editingRefound) return;
+
+    const updated = await updateRefound(editingRefound.id, data);
+
+    setRefounds((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+
+    createModalRef.current?.close();
+    setEditingRefound(null);
+  }
+
+  function handleEditClick(r: RefoundReqResponse) {
+    setEditingRefound(r);
+    createModalRef.current?.open();
+  }
+
+  // async function handleDelete(r: RefoundReqResponse) {
+  //   await deleteRefound(r.id);
+  //   setRefounds((prev) => prev.filter((item) => item.id !== r.id));
+  // }
+
+  async function handleDelete(r: RefoundReqResponse) {
+    const confirmed = window.confirm(
+      "Sei sicuro di voler eliminare questa richiesta?",
+    );
+
+    if (!confirmed) return;
+
+    await deleteRefound(r.id);
+
+    setRefounds((prev) => prev.filter((item) => item.id !== r.id));
   }
 
   const actionColumn =
@@ -140,12 +189,12 @@ export default function DashboardPage() {
             render: (r: RefoundReqResponse) => {
               return (
                 <div
-                  className="flex justify-start items-start w-[50px]" 
+                  className="flex justify-start items-start w-[12.5]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     className="btn btn-primary btn-sm ml-auto"
-                    onClick={() => createModalRef.current?.open()}
+                    onClick={() => handleEditClick(r)}
                   >
                     Modifica
                   </button>
@@ -156,8 +205,31 @@ export default function DashboardPage() {
         ]
       : [];
 
+  const actionColumnUserDelete =
+    role === "USER"
+      ? [
+          {
+            header: "Cancella",
+            render: (r: RefoundReqResponse) => {
+              return (
+                <div
+                  className="flex justify-start items-start w-[12.5]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    className="btn btn-primary btn-sm ml-auto"
+                    onClick={() => handleDelete(r)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              );
+            },
+          },
+        ]
+      : [];
+
   const columns = [
-    { header: "#", render: (r: RefoundReqResponse) => r.id },
     {
       header: "Dipendente",
       render: (r: RefoundReqResponse) =>
@@ -174,12 +246,13 @@ export default function DashboardPage() {
       render: (r: RefoundReqResponse) => <StatoBadge stato={r.state} />,
     },
     {
-      header: "Data creazione",
+      header: "Data spesa",
       render: (r: RefoundReqResponse) =>
-        new Date(r.createdAt).toLocaleDateString("it-IT"),
+        new Date(r.expenseDate).toLocaleDateString("it-IT"),
     },
     ...actionColumn,
     ...actionColumnUser,
+    ...actionColumnUserDelete,
   ];
 
   return (
@@ -190,7 +263,10 @@ export default function DashboardPage() {
         {role === "USER" && (
           <button
             className="btn btn-primary btn-sm ml-auto"
-            onClick={() => createModalRef.current?.open()}
+            onClick={() => {
+              setEditingRefound(null);
+              createModalRef.current?.open();
+            }}
           >
             Nuova richiesta
           </button>
@@ -201,8 +277,11 @@ export default function DashboardPage() {
         <RefoundFiltersForm
           onSubmit={setFilters}
           onReset={() => setFilters({})}
+          categories={categories}
+          states={states}
         />
         <Table
+          maxHeight="80vh"
           data={refounds}
           columns={columns}
           keyExtractor={(r) => r.id}
@@ -220,10 +299,21 @@ export default function DashboardPage() {
         />
       </Modal>
 
-      <Modal ref={createModalRef} title="Nuova richiesta di rimborso">
+      <Modal
+        ref={createModalRef}
+        title={
+          editingRefound ? "Modifica richiesta" : "Nuova richiesta di rimborso"
+        }
+      >
         <RefoundCreateForm
-          onSubmit={onCreateSubmit}
-          onCancel={() => createModalRef.current?.close()}
+          key={editingRefound?.id ?? "new"}
+          categories={categories}
+          initialData={editingRefound ?? undefined}
+          onSubmit={editingRefound ? onEditSubmit : onCreateSubmit}
+          onCancel={() => {
+            createModalRef.current?.close();
+            setEditingRefound(null);
+          }}
         />
       </Modal>
     </div>

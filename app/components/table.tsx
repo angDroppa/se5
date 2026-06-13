@@ -11,11 +11,12 @@ type TableProps<T> = {
   columns: Column<T>[];
   keyExtractor: (row: T) => string | number;
   onRowClick?: (row: T) => void;
+  maxHeight?: string;
 };
 
-export default function Table<T>({ data, columns, keyExtractor, onRowClick }: TableProps<T>) {
+export default function Table<T>({ data, columns, keyExtractor, onRowClick, maxHeight }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto w-full h-[80vh]">
+    <div className="overflow-x-auto w-full" style={maxHeight ? { maxHeight, overflowY: "auto" } : undefined}>
       <table className="table">
         <thead>
           <tr>

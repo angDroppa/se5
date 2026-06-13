@@ -44,7 +44,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<{ refounds: Re
                 },
             }),
         },
-        orderBy: { id: "asc" },
+        orderBy: { id: "desc" },
         include: { user: true, evaluator: true },
     });
 

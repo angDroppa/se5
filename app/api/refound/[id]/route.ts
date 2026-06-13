@@ -1,6 +1,7 @@
 import { requireAdmin, requireSession } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import {
+    RefoundReqCreateSchema,
     RefoundReqResponse,
     RefoundReqResponseSchema,
     RefoundReqUpdateStateSchema,
@@ -10,6 +11,7 @@ import z from "zod";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 const idSchema = z.coerce.number().int().positive();
 export async function PUT(
     req: NextRequest,
@@ -70,7 +72,7 @@ export async function PUT(
         import: Number(updated.import),
     }));
 }
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 export async function GET(
     req: NextRequest,
     { params }: RouteParams
@@ -102,6 +104,93 @@ export async function GET(
         ...refoundReq,
         import: Number(refoundReq.import),
     }));
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+export async function PATCH(
+    req: NextRequest,
+    { params }: RouteParams
+): Promise<NextResponse<RefoundReqResponse | { error: string }>> {
+    const session = await requireSession();
+
+    const { id } = await params;
+    const parseResult = idSchema.safeParse(id);
+    if (!parseResult.success) {
+        return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+    }
+    const numericId = parseResult.data;
+
+    const current = await prisma.refoundReq.findUnique({
+        where: {
+            id: numericId,
+            userId: session.userId, // solo il proprietario può modificare
+        },
+    });
+    if (!current) {
+        return NextResponse.json({ error: "Richiesta non trovata" }, { status: 404 });
+    }
+    if (current.state !== "ATTESA") {
+        return NextResponse.json(
+            { error: "Solo le richieste in attesa possono essere modificate" },
+            { status: 422 }
+        );
+    }
+
+    const body = await req.json();
+    const parsed = RefoundReqCreateSchema.safeParse(body);
+    if (!parsed.success) {
+        return NextResponse.json({ error: parsed.error.message }, { status: 422 });
+    }
+
+    const updated = await prisma.refoundReq.update({
+        where: { id: numericId },
+        data: {
+            expenseDate: parsed.data.expenseDate,
+            category: parsed.data.category,
+            import: parsed.data.import,
+            description: parsed.data.description,
+            refDocument: parsed.data.refDocument,
+        },
+        include: { user: true, evaluator: true },
+    });
+
+    return NextResponse.json(RefoundReqResponseSchema.parse({
+        ...updated,
+        import: Number(updated.import),
+    }));
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+export async function DELETE(
+    req: NextRequest,
+    { params }: RouteParams
+): Promise<NextResponse<{ success: true } | { error: string }>> {
+    const session = await requireSession();
+
+    const { id } = await params;
+    const parseResult = idSchema.safeParse(id);
+    if (!parseResult.success) {
+        return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+    }
+    const numericId = parseResult.data;
+
+    const current = await prisma.refoundReq.findUnique({
+        where: {
+            id: numericId,
+            userId: session.userId,
+        },
+    });
+    if (!current) {
+        return NextResponse.json({ error: "Richiesta non trovata" }, { status: 404 });
+    }
+    if (current.state !== "ATTESA") {
+        return NextResponse.json(
+            { error: "Solo le richieste in attesa possono essere eliminate" },
+            { status: 422 }
+        );
+    }
+
+    await prisma.refoundReq.delete({ where: { id: numericId } });
+
+    return NextResponse.json({ success: true });
 }
 
 

@@ -33,3 +33,12 @@ export async function getRefoundById(id: number): Promise<RefoundReqResponse> {
   const res = await api.get<RefoundReqResponse>(`/refound/${id}`);
   return RefoundReqResponseSchema.parse(res.data);
 }
+
+export async function updateRefound(id: number, data: RefoundReqCreate): Promise<RefoundReqResponse> {
+  const res = await api.patch<RefoundReqResponse>(`/refound/${id}`, data);
+  return RefoundReqResponseSchema.parse(res.data);
+}
+
+export async function deleteRefound(id: number): Promise<void> {
+  await api.delete(`/refound/${id}`);
+}

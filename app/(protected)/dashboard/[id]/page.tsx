@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { RefoundReqResponse } from "@/lib/validators/refoundreq";
 import { getRefoundById } from "@/lib/axios/refounds";
+import { STATE_CONFIG, StateId } from "@/lib/config/states";
 
 export default function RefoundDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,20 +16,34 @@ export default function RefoundDetailPage() {
 
   if (!refound) return null;
 
+  const stateConfig = STATE_CONFIG[refound.state as StateId];
+  const StateIcon = stateConfig?.icon;
+
   return (
     <div className="flex justify-center p-6">
-      <div className="card w-96 bg-base-100 shadow-sm">
+      <div className="card card-side bg-base-100 shadow-sm w-2xl">
+        <figure>
+          <img
+            src="https://img.daisyui.com/images/stock/photo-1635805737707-575885ab0820.webp"
+            alt="Rimborso"
+            className="h-full w-48 object-cover"
+          />
+        </figure>
         <div className="card-body">
-          <span className={`badge badge-xs ${stateBadge(refound.state)}`}>{refound.state}</span>
-          <div className="flex justify-between">
-            <h2 className="text-3xl font-bold">Rimborso #{refound.id}</h2>
-            <span className="text-xl">{refound.import} €</span>
+          <div className="flex items-center gap-2">
+            {StateIcon && <StateIcon className={stateConfig.className} size={20} />}
+            <h2 className="card-title">Rimborso #{refound.id}</h2>
+            <span className="ml-auto text-2xl font-bold">{refound.import} €</span>
           </div>
-          <ul className="mt-6 flex flex-col gap-2 text-xs">
+
+          <div className="divider my-1" />
+
+          <ul className="flex flex-col gap-2 text-sm">
             <Row label="Dipendente" value={`${refound.user.firstName} ${refound.user.lastName}`} />
             <Row label="Categoria" value={refound.category} />
             <Row label="Descrizione" value={refound.description ?? "-"} />
             <Row label="Documento" value={refound.refDocument ?? "-"} />
+            <Row label="Data spesa" value={fmt(refound.expenseDate)} />
             <Row label="Data creazione" value={fmt(refound.createdAt)} />
             <Row label="Valutatore" value={refound.evaluator ? `${refound.evaluator.firstName} ${refound.evaluator.lastName}` : "-"} />
             <Row label="Data valutazione" value={refound.evaluationDate ? fmt(refound.evaluationDate) : "-"} />
@@ -45,23 +60,13 @@ export default function RefoundDetailPage() {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <li>
-      <span className="font-semibold">{label}: </span>
-      <span>{value}</span>
+    <li className="flex justify-between">
+      <span className="text-base-content/60">{label}</span>
+      <span className="font-medium">{value}</span>
     </li>
   );
 }
 
 function fmt(date: Date | string) {
   return new Date(date).toLocaleDateString("it-IT");
-}
-
-function stateBadge(state: string) {
-  switch (state.toUpperCase()) {
-    case "ATTESA":    return "badge-warning";
-    case "APPROVATO": return "badge-success";
-    case "RIFIUTATO": return "badge-error";
-    case "PAGATO":    return "badge-info";
-    default:          return "badge-neutral";
-  }
 }

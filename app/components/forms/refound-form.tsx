@@ -1,22 +1,30 @@
-// app/components/forms/refound-create-form.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CategoryReq,
   RefoundReqCreate,
   RefoundReqCreateSchema,
+  RefoundReqResponse,
 } from "@/lib/validators/refoundreq";
-import { getCategories } from "@/lib/axios/refounds";
 
 type Props = {
-  onSubmit: (data: RefoundReqCreate) => Promise<void>;
+  onSubmit: (data: RefoundReqCreate) => void;
   onCancel: () => void;
+  initialData?: RefoundReqResponse;
+  categories: CategoryReq[];
 };
 
-export default function RefoundCreateForm({ onSubmit, onCancel }: Props) {
+export default function RefoundCreateForm({
+  onSubmit,
+  onCancel,
+  initialData,
+  categories,
+}: Props) {
+  const isEdit = !!initialData;
+
   const {
     register,
     handleSubmit,
@@ -26,11 +34,27 @@ export default function RefoundCreateForm({ onSubmit, onCancel }: Props) {
     resolver: zodResolver(RefoundReqCreateSchema) as Resolver<RefoundReqCreate>,
   });
 
-  const [categories, setCategories] = useState<CategoryReq[]>([]);
-
   useEffect(() => {
-    getCategories().then(setCategories).catch(console.error);
-  }, []);
+    if (initialData) {
+      reset({
+        expenseDate: new Date(initialData.expenseDate)
+          .toISOString()
+          .split("T")[0] as unknown as Date,
+        category: initialData.category,
+        import: initialData.import,
+        description: initialData.description ?? undefined,
+        refDocument: initialData.refDocument ?? undefined,
+      });
+    } else {
+      reset({
+        expenseDate: undefined,
+        category: "",
+        import: undefined,
+        description: "",
+        refDocument: "",
+      });
+    }
+  }, [initialData, reset]);
 
   return (
     <form
@@ -123,7 +147,7 @@ export default function RefoundCreateForm({ onSubmit, onCancel }: Props) {
           Annulla
         </button>
         <button type="submit" className="btn btn-primary btn-sm">
-          Invia richiesta
+          {isEdit ? "Salva modifiche" : "Invia richiesta"}
         </button>
       </div>
     </form>

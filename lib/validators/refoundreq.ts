@@ -68,6 +68,10 @@ export const RefoundReqResponseSchema = z.object({
         .coerce.date({ error: "La data di creazione non è valida" })
         .openapi({ example: "2026-05-01" }),
 
+    expenseDate: z
+        .coerce.date({ error: "La data di creazione non è valida" })
+        .openapi({ example: "2026-05-01" }),
+
     category: z
         .string({ error: "La categoria è obbligatoria" })
         .openapi({ example: "cena" }),

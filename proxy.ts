@@ -6,7 +6,7 @@ const PUBLIC_PATHS = ["/", "/login", "/register", "/api/auth/login", "/api/auth/
 
 // 3. Protetti per ruolo — richiedono token + ruolo specifico
 const ROLE_PROTECTED_PATHS: { path: string; roles: string[] }[] = [
-  { path: "/admin", roles: ["ADMIN"] },
+  { path: "/stats", roles: ["ADMIN"] },
   { path: "/api/admin", roles: ["ADMIN"] },
   { path: "/manager", roles: ["ADMIN", "MANAGER"] },
 ];
